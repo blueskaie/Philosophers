@@ -1,0 +1,41 @@
+import java.util.ArrayList;
+import java.util.concurrent.locks.*;
+public class Server implements DiningServer{
+    ArrayList<Philosopher> philosopher = new ArrayList<>();
+    public Lock lock = new ReentrantLock();
+    private Condition eat = lock.newCondition();
+    public void initialize(ArrayList<Philosopher> theEnlightened){
+        philosopher=theEnlightened;
+    }
+    //Signals that the philosopher is HUNGRY and wants to eat.
+    public void takeChopsticks(int philIndex){
+        lock.lock();
+        try {
+            philosopher.get(philIndex).state=State.HUNGRY;
+            displayState(philIndex, "HUNGRY");
+            test(philIndex);
+            if (philosopher.get(philIndex).state != State.EATING) eat.await(); //if the philosopher was not allowed to eat, wait
+        }catch (InterruptedException e){}
+        finally {
+            lock.unlock();
+        }
+    }
+  
+    public void returnChopsticks(int philIndex){
+        philosopher.get(philIndex).state=State.THINKING;
+        displayState(philIndex, "THINKING");
+        test((philIndex+4)%5);
+        test((philIndex+1)%5);
+    }
+ 
+    public void test(int philIndex){
+        if((philosopher.get((philIndex+4)%5).state !=State.EATING)&&(philosopher.get(philIndex).state==State.HUNGRY)&&(philosopher.get((philIndex+1)%5).state !=State.EATING)){
+            philosopher.get(philIndex).state=State.EATING; 
+            displayState(philIndex, "EATING");
+            eat.signal();
+        }
+    }
+    public void displayState(int philID, String msg) {
+    	System.out.println("Philosopher "+philID+" is "+msg);
+    }
+}

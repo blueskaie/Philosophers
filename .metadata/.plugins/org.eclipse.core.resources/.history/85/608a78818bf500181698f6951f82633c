@@ -1,0 +1,31 @@
+import java.util.Random;
+import java.util.concurrent.locks.Condition;
+public class Philosopher implements Runnable{
+    private DiningServer m_table;
+    private int m_ID;
+    public State state;
+ 
+    public Philosopher (DiningServer table, int ID){
+    	m_table=table;
+    	m_ID=ID;
+    }
+    
+    public void run(){
+        while (true){
+            state=State.THINKING;
+            Delay();
+            state=State.HUNGRY;
+            m_table.takeChopsticks(m_ID);
+            m_table.returnChopsticks(m_ID);
+        }
+    }
+    
+    public void Delay() {
+        try{
+            Random wait = new Random();
+            int min = 1000, max = 3000; //1 to 3 secs
+            int waitNum = wait.nextInt((max - min) + 1) + min;
+            Thread.sleep(waitNum);
+        }catch (InterruptedException e){}
+    }
+}

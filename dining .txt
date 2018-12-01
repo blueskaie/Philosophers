@@ -1,0 +1,122 @@
+import java.util.ArrayList;
+public class Driver {
+    public static void main (String[] args){
+        Server diningTable = new Server();
+        Philosophers zero = new Philosophers(diningTable, 0);
+        Philosophers one = new Philosophers(diningTable, 1);
+        Philosophers two = new Philosophers(diningTable, 2);
+        Philosophers three = new Philosophers(diningTable, 3);
+        Philosophers four = new Philosophers(diningTable, 4);
+        ArrayList<Philosophers> list = new ArrayList<>();
+        list.add(zero);
+        list.add(one);
+        list.add(two);
+        list.add(three);
+        list.add(four);
+        diningTable.initialize(list);
+        Thread a = new Thread(zero);
+        Thread b = new Thread(one);
+        Thread c = new Thread(two);
+        Thread y = new Thread(three);
+        Thread z = new Thread(four);
+        a.start();
+        b.start();
+        c.start();
+        y.start();
+        z.start();
+        try{
+            while (true){
+                a.join();
+                b.join();
+                c.join();
+                y.join();
+                z.join();
+            }
+        }catch (InterruptedException e){
+            e.printStackTrace();
+        }
+    }
+}
+------------------------------------------------------------------------------------------------------------------
+import java.util.Random;
+public class Philosophers implements Runnable{
+    private Server myTable;
+    private int PhilosopherID;
+    public State state;
+    public Philosophers (Server table, int ID){
+        myTable=table;
+        PhilosopherID=ID;
+    }
+    // Forever runs alternating between thinking, hungry and eating
+    public void run(){
+        while (true){
+            state=State.THINKING;
+            waitPhil();
+            state=State.HUNGRY;
+            myTable.takeChopsticks(PhilosopherID);
+            myTable.returnChopsticks(PhilosopherID);
+        }
+    }
+    // Generates random number between the min and max value seconds before a Philosopher action; random time
+    public void waitPhil() {
+        try{
+            Random wait = new Random();
+            int min = 1000, max = 3000; //1 to 3 secs
+            int waitNum = wait.nextInt((max - min) + 1) + min;
+            Thread.sleep(waitNum);
+        }catch (InterruptedException e){}
+    }
+}
+-----------------------------------------------------------------------------------------------------------
+import java.util.ArrayList;
+import java.util.concurrent.locks.*;
+public class Server implements DiningServer{
+    ArrayList<Philosophers> philosopher = new ArrayList<>();
+    public Lock lock = new ReentrantLock();
+    private Condition eat = lock.newCondition();
+    public void initialize(ArrayList<Philosophers> theEnlightened){
+        philosopher=theEnlightened;
+    }
+    //Signals that the philosopher is HUNGRY and wants to eat.
+    public void takeChopsticks(int philNum){
+        lock.lock();
+        try {
+            philosopher.get(philNum).state=State.HUNGRY;
+            System.out.println("Philosopher "+philNum+" is HUNGRY");
+            test(philNum);
+            if (philosopher.get(philNum).state != State.EATING) eat.await(); //if the philosopher was not allowed to eat, wait
+        }catch (InterruptedException e){}
+        finally {
+            lock.unlock();
+        }
+    }
+    // After eating the philosopher must return the chopstick.
+    public void returnChopsticks(int philNum){
+        philosopher.get(philNum).state=State.THINKING;
+        System.out.println("Philosopher "+philNum+" is THINKING");
+        test((philNum+4)%5);
+        test((philNum+1)%5);
+        System.out.println();
+    }
+    // tests if the Philosopher [philNum] can eat or not.
+    public void test(int philNum){
+        if((philosopher.get((philNum+4)%5).state !=State.EATING)&&(philosopher.get(philNum).state==State.HUNGRY)&&(philosopher.get((philNum+1)%5).state !=State.EATING)){
+            philosopher.get(philNum).state=State.EATING; //let philosopher eat
+            System.out.println("Philosopher "+philNum+" is EATING");
+            eat.signal(); //signal
+        }
+    }
+}
+----------------------------------------------------------------------------------------------------------------
+public enum State {
+    THINKING,
+    HUNGRY,
+    EATING
+}
+----------------------------------------------------------------------------------------------------------------
+public interface DiningServer {
+    // Called by philosopher that wishes to eat
+    public void takeChopsticks(int philNumber) throws InterruptedException;
+    // Called by philosopher when it has finished eating
+    public void returnChopsticks(int philNumber) throws InterruptedException;
+}

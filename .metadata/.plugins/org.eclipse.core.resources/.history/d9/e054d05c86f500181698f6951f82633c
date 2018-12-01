@@ -1,0 +1,32 @@
+import java.util.Random;
+import java.util.concurrent.locks.Condition;
+public class Philosopher implements Runnable{
+    private Server myTable;
+    private int PhilosopherID;
+    public State state;
+ 
+    public Philosopher (Server table, int ID){
+        myTable=table;
+        PhilosopherID=ID;
+    }
+    
+    public void run(){
+        while (true){
+            state=State.THINKING;
+            
+            Delay();
+            state=State.HUNGRY;
+            myTable.takeChopsticks(PhilosopherID);
+            myTable.returnChopsticks(PhilosopherID);
+        }
+    }
+    
+    public void Delay() {
+        try{
+            Random wait = new Random();
+            int min = 1000, max = 3000; //1 to 3 secs
+            int waitNum = wait.nextInt((max - min) + 1) + min;
+            Thread.sleep(waitNum);
+        }catch (InterruptedException e){}
+    }
+}

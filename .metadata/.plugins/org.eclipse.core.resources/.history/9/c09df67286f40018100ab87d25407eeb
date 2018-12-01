@@ -1,0 +1,30 @@
+import java.util.Random;
+public class Philosophers implements Runnable{
+    private Server myTable;
+    private int PhilosopherID;
+    public State state;
+    public Philosophers (Server table, int ID){
+        myTable=table;
+        PhilosopherID=ID;
+    }
+    // Forever runs alternating between thinking, hungry and eating
+    public void run(){
+        while (true){
+            state=State.THINKING;
+            //waitPhil();
+            state=State.HUNGRY;
+            myTable.takeChopsticks(PhilosopherID);
+            //waitPhil();
+            myTable.returnChopsticks(PhilosopherID);
+        }
+    }
+    // Generates random number between the min and max value seconds before a Philosopher action; random time
+    public void waitPhil() {
+        try{
+            Random wait = new Random();
+            int min = 1000, max = 3000; //1 to 3 secs
+            int waitNum = wait.nextInt((max - min) + 1) + min;
+            Thread.sleep(waitNum);
+        }catch (InterruptedException e){}
+    }
+}

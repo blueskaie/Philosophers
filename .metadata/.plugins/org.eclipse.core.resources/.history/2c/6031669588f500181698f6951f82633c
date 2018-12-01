@@ -1,0 +1,19 @@
+import java.util.ArrayList;
+public class Driver {
+    public static void main (String[] args){
+        Server diningTable = new Server();
+        Philosopher persons[] = new Philosopher[5];
+        for (int i = 0; i < 5; i++) {
+        	persons[i] = new Philosopher(diningTable, i); 
+        }
+        ArrayList<Philosopher> list = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+        	list.add(persons[i]);
+        }
+        diningTable.initialize(list);
+        for (int i = 0; i < 5; i++) {
+        	Thread a = new Thread(persons[i]);
+        	a.start();
+        }
+    }
+}
